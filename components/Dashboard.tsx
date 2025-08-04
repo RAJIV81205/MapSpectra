@@ -5,6 +5,7 @@ import { TimeRange, DataSource, PolygonData } from '../types'
 import Map from './Map'
 import TimelineSlider from './TimelineSlider'
 import Sidebar from './Sidebar'
+import PolygonGrid from './Polygon'
 
 const Dashboard: React.FC = () => {
   // Initialize time range with current date
@@ -60,27 +61,12 @@ const Dashboard: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-gray-900 p-6">
-      {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-          MapSpectra
-        </h1>
-        <p className="text-gray-600 dark:text-gray-400">
-          Interactive weather data visualization and analysis
-        </p>
-      </div>
+      
 
       {/* Timeline Card - Moved to top */}
       <div className="mb-6">
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
-          <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-              Timeline Control
-            </h2>
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              Select time range for data analysis
-            </p>
-          </div>
+          
           <div className="p-4">
             <TimelineSlider
               timeRange={timeRange}
@@ -113,6 +99,17 @@ const Dashboard: React.FC = () => {
                 setSelectedPolygon={setSelectedPolygon}
               />
             </div>
+          </div>
+          
+          {/* Polygon Grid - Under the map */}
+          <div className="mt-6">
+            <PolygonGrid
+              polygons={polygons}
+              setPolygons={setPolygons}
+              selectedPolygon={selectedPolygon}
+              setSelectedPolygon={setSelectedPolygon}
+              dataSources={dataSources}
+            />
           </div>
         </div>
 

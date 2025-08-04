@@ -175,7 +175,7 @@ const Map: React.FC<MapComponentProps> = ({
 
         // Create map instance with locked zoom for 2 sq km resolution
         const map = L.map(mapContainerRef.current!, {
-          center: [40.7128, -74.0060],
+          center: [22.5744, 88.3629],
           zoom: 10,
           minZoom: 10,
           maxZoom: 10,

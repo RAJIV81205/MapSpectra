@@ -22,7 +22,6 @@ const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const [expandedSections, setExpandedSections] = useState({
     dataSources: true,
-    polygons: true,
     details: true
   })
 
@@ -85,16 +84,7 @@ const Sidebar: React.FC<SidebarProps> = ({
     )
   }
 
-  const deletePolygon = (polygonId: string) => {
-    const polygon = polygons.find(p => p.id === polygonId)
-    if (polygon) {
-      polygon.layer.remove()
-      setPolygons(polygons.filter(p => p.id !== polygonId))
-      if (selectedPolygon?.id === polygonId) {
-        setSelectedPolygon(null)
-      }
-    }
-  }
+
 
   const SectionHeader = ({ title, count, isExpanded, onToggle, icon }: {
     title: string
@@ -269,91 +259,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         )}
       </div>
 
-      {/* Polygons Section */}
-      <div>
-        <SectionHeader
-          title="Polygons"
-          count={polygons.length}
-          isExpanded={expandedSections.polygons}
-          onToggle={() => toggleSection('polygons')}
-          icon="📐"
-        />
-        
-        {expandedSections.polygons && (
-          <div className="mt-4">
-            {polygons.length === 0 ? (
-              <div className="text-center py-8">
-                <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center">
-                  <svg className="w-8 h-8 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
-                  </svg>
-                </div>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">No polygons yet</p>
-                <p className="text-xs text-gray-400 dark:text-gray-500">Draw polygons on the map to analyze data</p>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {polygons.map((polygon, index) => (
-                  <div
-                    key={polygon.id}
-                    className={`group p-4 rounded-xl border cursor-pointer transition-all duration-300 transform hover:scale-[1.02] ${
-                      selectedPolygon?.id === polygon.id
-                        ? 'border-blue-500 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/30 shadow-lg shadow-blue-500/20'
-                        : 'border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-750 hover:border-blue-300 dark:hover:border-blue-500 hover:shadow-md'
-                    }`}
-                    onClick={() => setSelectedPolygon(polygon)}
-                  >
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center gap-3">
-                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold ${
-                          selectedPolygon?.id === polygon.id
-                            ? 'bg-blue-500 text-white'
-                            : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
-                        }`}>
-                          {index + 1}
-                        </div>
-                        <div>
-                          <div className="font-semibold text-gray-900 dark:text-white">
-                            {polygon.name}
-                          </div>
-                        </div>
-                      </div>
-                      <button
-                        className="opacity-0 group-hover:opacity-100 w-8 h-8 flex items-center justify-center text-red-500 hover:text-white hover:bg-red-500 rounded-lg transition-all duration-200"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          deletePolygon(polygon.id)
-                        }}
-                      >
-                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" clipRule="evenodd" />
-                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                        </svg>
-                      </button>
-                    </div>
-                    
-                    {/* Data Values */}
-                    <div className="space-y-1">
-                      {Object.entries(polygon.data).map(([field, value]) => {
-                        const unit = dataSources.find(ds => ds.field === field)?.unit || ''
-                        return (
-                          <div key={field} className="flex justify-between items-center text-sm">
-                            <span className="text-gray-600 dark:text-gray-300">{field}:</span>
-                            <span className="font-mono font-medium text-gray-900 dark:text-white">
-                              {value !== null ? value.toFixed(2) : 'N/A'} 
-                              {unit && <span className="text-gray-500 ml-1">{unit}</span>}
-                            </span>
-                          </div>
-                        )
-                      })}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-      </div>
+
 
       {/* Selected Polygon Details */}
       {selectedPolygon && (
