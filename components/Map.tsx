@@ -58,7 +58,7 @@ const Map: React.FC<MapComponentProps> = ({
       if (data.hourly && data.hourly[field]) {
         const values = data.hourly[field]
         const validValues = values.filter((v: number) => v !== null && v !== undefined && !isNaN(v))
-        
+
         if (validValues.length === 0) {
           throw new Error('No valid data available for this location and time')
         }
@@ -191,10 +191,12 @@ const Map: React.FC<MapComponentProps> = ({
         const L = await import('leaflet')
         await import('leaflet-draw')
 
-        const DrawEvents = (L as any).Draw?.Event || {
+        // Fixed code
+        const DrawEvents = (L as any).Draw && (L as any).Draw.Event ? (L as any).Draw.Event : {
           CREATED: 'draw:created',
           DELETED: 'draw:deleted'
         }
+
 
         delete (L.Icon.Default.prototype as any)._getIconUrl
         L.Icon.Default.mergeOptions({
@@ -219,14 +221,14 @@ const Map: React.FC<MapComponentProps> = ({
 
         const tileLayer = theme === 'dark'
           ? L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-              attribution: '© OpenStreetMap contributors © CARTO',
-              subdomains: 'abcd',
-              maxZoom: 20
-            })
+            attribution: '© OpenStreetMap contributors © CARTO',
+            subdomains: 'abcd',
+            maxZoom: 20
+          })
           : L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-              attribution: '© OpenStreetMap contributors',
-              maxZoom: 20
-            })
+            attribution: '© OpenStreetMap contributors',
+            maxZoom: 20
+          })
 
         tileLayer.addTo(map)
 
