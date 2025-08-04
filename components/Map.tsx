@@ -196,7 +196,6 @@ const Map: React.FC<MapComponentProps> = ({
           DELETED: 'draw:deleted'
         }
 
-        // Fix leaflet icon issue
         delete (L.Icon.Default.prototype as any)._getIconUrl
         L.Icon.Default.mergeOptions({
           iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
@@ -204,8 +203,11 @@ const Map: React.FC<MapComponentProps> = ({
           shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
         })
 
-        // FIXED: Ensure mapContainerRef.current exists before using it
-        if (!mapContainerRef.current) return
+        // CRITICAL FIX: Check for null before using
+        if (!mapContainerRef.current) {
+          console.error('Map container ref is null')
+          return
+        }
 
         const map = L.map(mapContainerRef.current, {
           center: [22.5744, 88.3629],
