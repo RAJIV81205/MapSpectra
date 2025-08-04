@@ -204,8 +204,10 @@ const Map: React.FC<MapComponentProps> = ({
           shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
         })
 
-        // Fixed: Removed optional chaining with new expression
-        const map = L.map(mapContainerRef.current!, {
+        // FIXED: Ensure mapContainerRef.current exists before using it
+        if (!mapContainerRef.current) return
+
+        const map = L.map(mapContainerRef.current, {
           center: [22.5744, 88.3629],
           zoom: 10,
           minZoom: 8,
@@ -404,7 +406,7 @@ const Map: React.FC<MapComponentProps> = ({
   }
 
   return (
-    <div className="relative h-120">
+    <div className="relative h-96">
       {isLoading && (
         <div className="absolute top-4 right-4 z-50 bg-yellow-400 border-4 border-black px-4 py-2 font-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
           UPDATING POLYGONS...

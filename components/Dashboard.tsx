@@ -70,7 +70,7 @@ const Dashboard: React.FC = () => {
       {/* Main brutal header - straight, no rotation */}
       <div className="text-center mb-6">
         <h1 className="text-6xl font-black text-black bg-white border-4 border-black inline-block px-8 py-4 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transform-none">
-          MAP SPECTRA
+          WEATHER BRUTAL
         </h1>
       </div>
 
@@ -85,14 +85,14 @@ const Dashboard: React.FC = () => {
       </div>
 
       {/* Main Grid Layout */}
-      <div className=" grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Map Card - Brutal styling, straight */}
         <div className="lg:col-span-2 bg-white border-4 border-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]">
           <div className="bg-black text-white px-4 py-2 border-b-4 border-black">
             <h2 className="text-xl font-black uppercase">Interactive Map</h2>
             <p className="text-sm font-bold">Draw polygons to analyze weather data</p>
           </div>
-          <div className="relative ">
+          <div className="relative">
             <Map
               timeRange={timeRange}
               dataSources={dataSources}
@@ -109,7 +109,7 @@ const Dashboard: React.FC = () => {
           <div className="bg-black text-white px-4 py-2 border-b-4 border-black">
             <h2 className="text-xl font-black uppercase">Controls</h2>
           </div>
-          <div className="h-120 overflow-y-auto">
+          <div className="h-96 overflow-y-auto">
             <Sidebar
               dataSources={dataSources}
               setDataSources={setDataSources}
