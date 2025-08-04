@@ -3,9 +3,14 @@
 import { useEffect, useRef, useState } from 'react'
 import { useTheme } from 'next-themes'
 import toast from 'react-hot-toast'
-import 'leaflet/dist/leaflet.css'
-import 'leaflet-draw/dist/leaflet.draw.css'
+import mapboxgl from 'mapbox-gl'
+import MapboxDraw from '@mapbox/mapbox-gl-draw'
+import 'mapbox-gl/dist/mapbox-gl.css'
+import '@mapbox/mapbox-gl-draw/dist/mapbox-gl-draw.css'
 import { DataSource, PolygonData, TimeRange } from '@/types'
+
+// Set the access token immediately
+mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN || ''
 
 interface MapComponentProps {
   timeRange: TimeRange
@@ -24,9 +29,9 @@ const Map: React.FC<MapComponentProps> = ({
   selectedPolygon,
   setSelectedPolygon
 }) => {
-  const mapRef = useRef<any>(null)
+  const mapRef = useRef<mapboxgl.Map | null>(null)
   const mapContainerRef = useRef<HTMLDivElement>(null)
-  const drawnItemsRef = useRef<any>(null)
+  const drawRef = useRef<MapboxDraw | null>(null)
   const { theme } = useTheme()
   const [isClient, setIsClient] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
@@ -58,7 +63,7 @@ const Map: React.FC<MapComponentProps> = ({
       if (data.hourly && data.hourly[field]) {
         const values = data.hourly[field]
         const validValues = values.filter((v: number) => v !== null && v !== undefined && !isNaN(v))
-
+        
         if (validValues.length === 0) {
           throw new Error('No valid data available for this location and time')
         }
@@ -136,9 +141,19 @@ const Map: React.FC<MapComponentProps> = ({
     return '#cccccc'
   }
 
+  const getPolygonCenter = (coordinates: number[][][]): [number, number] => {
+    const coords = coordinates[0]
+    let x = 0, y = 0
+    coords.forEach(coord => {
+      x += coord[0]
+      y += coord[1]
+    })
+    return [x / coords.length, y / coords.length]
+  }
+
   useEffect(() => {
     const updatePolygonColors = async () => {
-      if (!polygons.length || !mapRef.current) return
+      if (!polygons.length || !mapRef.current || !drawRef.current) return
 
       const activeDataSource = dataSources.find(ds => ds.isActive)
       if (!activeDataSource) return
@@ -147,9 +162,11 @@ const Map: React.FC<MapComponentProps> = ({
       try {
         const updatedPolygons = await Promise.all(
           polygons.map(async (polygon) => {
-            const bounds = polygon.layer.getBounds()
-            const center = bounds.getCenter()
-            const value = await fetchWeatherData(center.lat, center.lng, activeDataSource.field)
+            const feature = drawRef.current?.get(polygon.id)
+            if (!feature || feature.geometry.type !== 'Polygon') return polygon
+
+            const [centerLng, centerLat] = getPolygonCenter(feature.geometry.coordinates)
+            const value = await fetchWeatherData(centerLat, centerLng, activeDataSource.field)
 
             const updatedPolygon = {
               ...polygon,
@@ -158,12 +175,14 @@ const Map: React.FC<MapComponentProps> = ({
             }
 
             const color = calculatePolygonColor(value, activeDataSource)
-            polygon.layer.setStyle({
-              fillColor: color,
-              color: color,
-              fillOpacity: 0.6,
-              weight: 2
-            })
+            
+            // Update the feature styling
+            if (mapRef.current?.getLayer(`polygon-fill-${polygon.id}`)) {
+              mapRef.current?.setPaintProperty(`polygon-fill-${polygon.id}`, 'fill-color', color)
+            }
+            if (mapRef.current?.getLayer(`polygon-stroke-${polygon.id}`)) {
+              mapRef.current?.setPaintProperty(`polygon-stroke-${polygon.id}`, 'line-color', '#000000')
+            }
 
             return updatedPolygon
           })
@@ -185,196 +204,137 @@ const Map: React.FC<MapComponentProps> = ({
   useEffect(() => {
     if (!isClient || !mapContainerRef.current) return
 
-    const initializeMap = async () => {
+    const initializeMap = () => {
       try {
         setIsLoading(true)
-        const L = await import('leaflet')
-        await import('leaflet-draw')
 
-        // Fixed code
-        const DrawEvents = (L as any).Draw && (L as any).Draw.Event ? (L as any).Draw.Event : {
-          CREATED: 'draw:created',
-          DELETED: 'draw:deleted'
-        }
-
-
-        delete (L.Icon.Default.prototype as any)._getIconUrl
-        L.Icon.Default.mergeOptions({
-          iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
-          iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
-          shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
-        })
-
-        // CRITICAL FIX: Check for null before using
         if (!mapContainerRef.current) {
           console.error('Map container ref is null')
+          setIsLoading(false)
           return
         }
 
-        const map = L.map(mapContainerRef.current, {
-          center: [22.5744, 88.3629],
+        // Clear any existing map
+        if (mapRef.current) {
+          mapRef.current.remove()
+          mapRef.current = null
+        }
+
+        const map = new mapboxgl.Map({
+          container: mapContainerRef.current,
+          style: theme === 'dark' ? 'mapbox://styles/mapbox/dark-v11' : 'mapbox://styles/mapbox/streets-v12',
+          center: [88.3629, 22.5744], // Longitude, Latitude
           zoom: 10,
           minZoom: 8,
-          maxZoom: 15,
-          zoomControl: true
+          maxZoom: 15
         })
 
-        const tileLayer = theme === 'dark'
-          ? L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-            attribution: '© OpenStreetMap contributors © CARTO',
-            subdomains: 'abcd',
-            maxZoom: 20
-          })
-          : L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© OpenStreetMap contributors',
-            maxZoom: 20
-          })
-
-        tileLayer.addTo(map)
-
-        const drawnItems = new L.FeatureGroup()
-        map.addLayer(drawnItems)
-        drawnItemsRef.current = drawnItems
-
-        const DrawControl = (L as any).Control?.Draw
-        const drawControl = new DrawControl({
-          position: 'topright',
-          draw: {
-            polygon: {
-              allowIntersection: false,
-              showArea: true,
-              showLength: true,
-              shapeOptions: {
-                color: '#ff0000',
-                fillOpacity: 0.3,
-                weight: 4
-              }
-            },
-            rectangle: false,
-            circle: false,
-            circlemarker: false,
-            marker: false,
-            polyline: false
-          },
-          edit: {
-            featureGroup: drawnItems,
-            remove: true
+        const draw = new MapboxDraw({
+          displayControlsDefault: false,
+          controls: {
+            polygon: true,
+            trash: true
           }
         })
 
-        map.addControl(drawControl)
+        map.addControl(draw, 'top-right')
 
-        map.on(DrawEvents.CREATED, async (e: any) => {
-          const layer = e.layer
-          layer.setStyle({
-            color: '#ff0000',
-            fillColor: '#ff0000',
-            fillOpacity: 0.5,
-            weight: 4,
-            dashArray: '10, 10'
-          })
+        map.on('load', () => {
+          console.log('Map loaded successfully')
+          setIsLoading(false)
+        })
 
-          const confirmPopup = L.popup({
-            closeButton: false,
-            autoClose: false,
-            closeOnEscapeKey: true,
-            className: 'brutal-popup'
-          })
-            .setLatLng(layer.getBounds().getCenter())
-            .setContent(`
-              <div class="text-center p-2 font-mono">
-                <div class="text-lg font-black mb-2">Save this polygon?</div>
-                <div class="flex gap-2 justify-center">
-                  <button id="save-polygon" class="bg-green-500 text-white px-3 py-1 border-2 border-white font-black text-sm">
-                    ✓ SAVE
-                  </button>
-                  <button id="cancel-polygon" class="bg-red-500 text-white px-3 py-1 border-2 border-white font-black text-sm">
-                    ✗ CANCEL
-                  </button>
-                </div>
-              </div>
-            `)
-            .openOn(map)
+        map.on('error', (e) => {
+          console.error('Map error:', e.error)
+          setIsLoading(false)
+          toast.error('Map failed to load')
+        })
 
-          const handleSave = async () => {
-            const polygonId = `polygon_${Date.now()}`
-            drawnItems.addLayer(layer)
+        map.on('draw.create', async (e: any) => {
+          const feature = e.features[0]
+          if (feature.geometry.type !== 'Polygon') return
 
-            const activeDataSource = dataSources.find(ds => ds.isActive)
-            if (!activeDataSource) {
-              map.closePopup()
-              toast.dismiss()
-              toast.error('No active data source selected')
-              return
+          const activeDataSource = dataSources.find(ds => ds.isActive)
+          if (!activeDataSource) {
+            toast.dismiss()
+            toast.error('No active data source selected')
+            draw.delete(feature.id as string)
+            return
+          }
+
+          const [centerLng, centerLat] = getPolygonCenter(feature.geometry.coordinates)
+          
+          toast.dismiss()
+          const loadingToast = toast.loading('FETCHING WEATHER DATA...')
+
+          try {
+            const value = await fetchWeatherData(centerLat, centerLng, activeDataSource.field)
+            
+            const polygonData: PolygonData = {
+              id: feature.id as string,
+              layer: feature as any,
+              dataSourceId: activeDataSource.id,
+              data: { [activeDataSource.field]: value },
+              name: `Polygon ${polygonCounter}`
             }
 
-            const bounds = layer.getBounds()
-            const center = bounds.getCenter()
+            const color = calculatePolygonColor(value, activeDataSource)
 
-            layer.setStyle({
-              color: '#ffff00',
-              fillColor: '#ffff00',
-              fillOpacity: 0.7,
-              weight: 4,
-              dashArray: '5, 5'
+            // Add custom styling for this specific polygon
+            map.addSource(`polygon-source-${feature.id}`, {
+              type: 'geojson',
+              data: feature
             })
 
-            toast.dismiss()
-            const loadingToast = toast.loading('FETCHING WEATHER DATA...')
-
-            try {
-              const value = await fetchWeatherData(center.lat, center.lng, activeDataSource.field)
-
-              const polygonData: PolygonData = {
-                id: polygonId,
-                layer: layer,
-                dataSourceId: activeDataSource.id,
-                data: { [activeDataSource.field]: value },
-                name: `Polygon ${polygonCounter}`
+            map.addLayer({
+              id: `polygon-fill-${feature.id}`,
+              type: 'fill',
+              source: `polygon-source-${feature.id}`,
+              paint: {
+                'fill-color': color,
+                'fill-opacity': 0.7
               }
+            })
 
-              const color = calculatePolygonColor(value, activeDataSource)
-              layer.setStyle({
-                fillColor: color,
-                color: '#000000',
-                fillOpacity: 0.7,
-                weight: 4,
-                dashArray: null
-              })
+            map.addLayer({
+              id: `polygon-stroke-${feature.id}`,
+              type: 'line',
+              source: `polygon-source-${feature.id}`,
+              paint: {
+                'line-color': '#000000',
+                'line-width': 4
+              }
+            })
 
-              layer.on('click', () => {
-                setSelectedPolygon(polygonData)
-              })
+            // Add click handler for polygon selection
+            map.on('click', `polygon-fill-${feature.id}`, () => {
+              setSelectedPolygon(polygonData)
+            })
 
-              setPolygons(prev => [...prev, polygonData])
-              setPolygonCounter(prev => prev + 1)
-
-              toast.success('POLYGON CREATED SUCCESSFULLY!', { id: loadingToast })
-            } catch (error) {
-              toast.error('FAILED TO CREATE POLYGON', { id: loadingToast })
-              map.removeLayer(layer)
-            }
-
-            map.closePopup()
+            setPolygons(prev => [...prev, polygonData])
+            setPolygonCounter(prev => prev + 1)
+            toast.success('POLYGON CREATED SUCCESSFULLY!', { id: loadingToast })
+          } catch (error) {
+            toast.error('FAILED TO CREATE POLYGON', { id: loadingToast })
+            draw.delete(feature.id as string)
           }
-
-          const handleCancel = () => {
-            map.removeLayer(layer)
-            map.closePopup()
-          }
-
-          setTimeout(() => {
-            const saveBtn = document.getElementById('save-polygon')
-            const cancelBtn = document.getElementById('cancel-polygon')
-            if (saveBtn) saveBtn.addEventListener('click', handleSave)
-            if (cancelBtn) cancelBtn.addEventListener('click', handleCancel)
-          }, 100)
         })
 
-        map.on(DrawEvents.DELETED, (e: any) => {
-          const deletedLayers = e.layers._layers
-          Object.keys(deletedLayers).forEach(layerId => {
-            setPolygons(prev => prev.filter(p => p.layer._leaflet_id !== parseInt(layerId)))
+        map.on('draw.delete', (e: any) => {
+          const deletedFeatures = e.features
+          deletedFeatures.forEach((feature: any) => {
+            // Remove custom layers
+            if (map.getLayer(`polygon-fill-${feature.id}`)) {
+              map.removeLayer(`polygon-fill-${feature.id}`)
+            }
+            if (map.getLayer(`polygon-stroke-${feature.id}`)) {
+              map.removeLayer(`polygon-stroke-${feature.id}`)
+            }
+            if (map.getSource(`polygon-source-${feature.id}`)) {
+              map.removeSource(`polygon-source-${feature.id}`)
+            }
+
+            setPolygons(prev => prev.filter(p => p.id !== feature.id))
           })
           setSelectedPolygon(null)
           toast.dismiss()
@@ -382,7 +342,8 @@ const Map: React.FC<MapComponentProps> = ({
         })
 
         mapRef.current = map
-        setIsLoading(false)
+        drawRef.current = draw
+
       } catch (err) {
         console.error('Failed to initialize map:', err)
         toast.dismiss()
@@ -391,9 +352,11 @@ const Map: React.FC<MapComponentProps> = ({
       }
     }
 
-    initializeMap()
+    // Add a small delay to ensure DOM is ready
+    const timeoutId = setTimeout(initializeMap, 100)
 
     return () => {
+      clearTimeout(timeoutId)
       if (mapRef.current) {
         mapRef.current.remove()
         mapRef.current = null
@@ -403,20 +366,24 @@ const Map: React.FC<MapComponentProps> = ({
 
   if (!isClient) {
     return (
-      <div className="h-96 flex items-center justify-center bg-gray-100 border-4 border-black">
-        <div className="text-xl font-black">Loading map...</div>
+      <div className="w-full h-full flex items-center justify-center bg-white border-4 border-black">
+        <div className="text-2xl font-black text-black">Loading map...</div>
       </div>
     )
   }
 
   return (
-    <div className="relative h-96">
+    <div className="relative w-full h-full">
+      <div 
+        ref={mapContainerRef} 
+        className="w-full h-full border-4 border-black"
+        style={{ minHeight: '400px', height: '100%', width: '100%' }}
+      />
       {isLoading && (
-        <div className="absolute top-4 right-4 z-50 bg-yellow-400 border-4 border-black px-4 py-2 font-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+        <div className="absolute top-4 left-4 bg-yellow-400 text-black px-4 py-2 border-4 border-black font-black text-xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
           UPDATING POLYGONS...
         </div>
       )}
-      <div ref={mapContainerRef} className="h-full w-full border-4 border-black" />
     </div>
   )
 }
