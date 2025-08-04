@@ -30,14 +30,12 @@ const Map: React.FC<MapComponentProps> = ({
   const { theme } = useTheme()
   const [isClient, setIsClient] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
-  // Add polygon counter state
   const [polygonCounter, setPolygonCounter] = useState(1)
 
   useEffect(() => {
     setIsClient(true)
   }, [])
 
-  // Fetch weather data from Open-Meteo API
   const fetchWeatherData = async (lat: number, lng: number, field: string): Promise<number | null> => {
     try {
       const startDate = new Date(timeRange.start)
@@ -111,7 +109,6 @@ const Map: React.FC<MapComponentProps> = ({
 
     for (const threshold of sortedThresholds) {
       let conditionMet = false
-
       switch (threshold.operator) {
         case '>=':
           conditionMet = value >= threshold.value
@@ -136,7 +133,6 @@ const Map: React.FC<MapComponentProps> = ({
         return threshold.color
       }
     }
-
     return '#cccccc'
   }
 
@@ -148,13 +144,11 @@ const Map: React.FC<MapComponentProps> = ({
       if (!activeDataSource) return
 
       setIsLoading(true)
-
       try {
         const updatedPolygons = await Promise.all(
           polygons.map(async (polygon) => {
             const bounds = polygon.layer.getBounds()
             const center = bounds.getCenter()
-
             const value = await fetchWeatherData(center.lat, center.lng, activeDataSource.field)
 
             const updatedPolygon = {
@@ -202,6 +196,7 @@ const Map: React.FC<MapComponentProps> = ({
           DELETED: 'draw:deleted'
         }
 
+        // Fix leaflet icon issue
         delete (L.Icon.Default.prototype as any)._getIconUrl
         L.Icon.Default.mergeOptions({
           iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
@@ -209,6 +204,7 @@ const Map: React.FC<MapComponentProps> = ({
           shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
         })
 
+        // Fixed: Removed optional chaining with new expression
         const map = L.map(mapContainerRef.current!, {
           center: [22.5744, 88.3629],
           zoom: 10,
@@ -264,7 +260,6 @@ const Map: React.FC<MapComponentProps> = ({
 
         map.on(DrawEvents.CREATED, async (e: any) => {
           const layer = e.layer
-
           layer.setStyle({
             color: '#ff0000',
             fillColor: '#ff0000',
@@ -279,15 +274,21 @@ const Map: React.FC<MapComponentProps> = ({
             closeOnEscapeKey: true,
             className: 'brutal-popup'
           })
-          .setLatLng(layer.getBounds().getCenter())
-          .setContent(`
-            <div style="text-align: center; font-family: monospace; font-weight: bold;">
-              <div style="margin-bottom: 10px;">Save this polygon?</div>
-              <button id="save-polygon" style="margin: 5px; padding: 5px 10px; background: #00ff00; border: 2px solid #000; font-weight: bold;">✓ SAVE</button>
-              <button id="cancel-polygon" style="margin: 5px; padding: 5px 10px; background: #ff0000; border: 2px solid #000; font-weight: bold; color: white;">✗ CANCEL</button>
-            </div>
-          `)
-          .openOn(map)
+            .setLatLng(layer.getBounds().getCenter())
+            .setContent(`
+              <div class="text-center p-2 font-mono">
+                <div class="text-lg font-black mb-2">Save this polygon?</div>
+                <div class="flex gap-2 justify-center">
+                  <button id="save-polygon" class="bg-green-500 text-white px-3 py-1 border-2 border-white font-black text-sm">
+                    ✓ SAVE
+                  </button>
+                  <button id="cancel-polygon" class="bg-red-500 text-white px-3 py-1 border-2 border-white font-black text-sm">
+                    ✗ CANCEL
+                  </button>
+                </div>
+              </div>
+            `)
+            .openOn(map)
 
           const handleSave = async () => {
             const polygonId = `polygon_${Date.now()}`
@@ -323,7 +324,7 @@ const Map: React.FC<MapComponentProps> = ({
                 layer: layer,
                 dataSourceId: activeDataSource.id,
                 data: { [activeDataSource.field]: value },
-                name: `Polygon ${polygonCounter}` // Use the counter here
+                name: `Polygon ${polygonCounter}`
               }
 
               const color = calculatePolygonColor(value, activeDataSource)
@@ -340,7 +341,8 @@ const Map: React.FC<MapComponentProps> = ({
               })
 
               setPolygons(prev => [...prev, polygonData])
-              setPolygonCounter(prev => prev + 1) // Increment counter after successful creation
+              setPolygonCounter(prev => prev + 1)
+
               toast.success('POLYGON CREATED SUCCESSFULLY!', { id: loadingToast })
             } catch (error) {
               toast.error('FAILED TO CREATE POLYGON', { id: loadingToast })
@@ -395,23 +397,20 @@ const Map: React.FC<MapComponentProps> = ({
 
   if (!isClient) {
     return (
-      <div className="h-[600px] border-4 border-black bg-gray-200 flex items-center justify-center font-mono font-bold">
-        Loading map...
+      <div className="h-96 flex items-center justify-center bg-gray-100 border-4 border-black">
+        <div className="text-xl font-black">Loading map...</div>
       </div>
     )
   }
 
   return (
-    <div className="relative">
-      <div
-        ref={mapContainerRef}
-        className="h-[600px] border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]"
-      />
+    <div className="relative h-120">
       {isLoading && (
-        <div className="absolute top-4 right-4 bg-yellow-400 text-black px-4 py-2 border-4 border-black font-mono font-bold shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+        <div className="absolute top-4 right-4 z-50 bg-yellow-400 border-4 border-black px-4 py-2 font-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
           UPDATING POLYGONS...
         </div>
       )}
+      <div ref={mapContainerRef} className="h-full w-full border-4 border-black" />
     </div>
   )
 }

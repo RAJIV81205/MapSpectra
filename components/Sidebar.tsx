@@ -42,13 +42,13 @@ const Sidebar: React.FC<SidebarProps> = ({
       prev.map(source =>
         source.id === sourceId
           ? {
-            ...source,
-            thresholds: source.thresholds.map((threshold, index) =>
-              index === thresholdIndex
-                ? { ...threshold, [field]: value }
-                : threshold
-            )
-          }
+              ...source,
+              thresholds: source.thresholds.map((threshold, index) =>
+                index === thresholdIndex
+                  ? { ...threshold, [field]: value }
+                  : threshold
+              )
+            }
           : source
       )
     )
@@ -59,12 +59,12 @@ const Sidebar: React.FC<SidebarProps> = ({
       prev.map(source =>
         source.id === sourceId
           ? {
-            ...source,
-            thresholds: [
-              ...source.thresholds,
-              { operator: '>=', value: 0, color: '#3B82F6' }
-            ]
-          }
+              ...source,
+              thresholds: [
+                ...source.thresholds,
+                { operator: '>=', value: 0, color: '#3B82F6' }
+              ]
+            }
           : source
       )
     )
@@ -75,9 +75,9 @@ const Sidebar: React.FC<SidebarProps> = ({
       prev.map(source =>
         source.id === sourceId
           ? {
-            ...source,
-            thresholds: source.thresholds.filter((_, index) => index !== thresholdIndex)
-          }
+              ...source,
+              thresholds: source.thresholds.filter((_, index) => index !== thresholdIndex)
+            }
           : source
       )
     )
@@ -90,71 +90,80 @@ const Sidebar: React.FC<SidebarProps> = ({
     onToggle: () => void
     icon: string
   }) => (
-    <button
+    <div
       onClick={onToggle}
-      className="w-full bg-black text-white p-4 border-4 border-white shadow-[6px_6px_0px_0px_rgba(255,255,255,1)] hover:shadow-[8px_8px_0px_0px_rgba(255,255,255,1)] transition-all font-black uppercase text-left flex items-center justify-between mb-4 font-mono"
+      className="flex items-center justify-between p-3 bg-black text-white cursor-pointer hover:bg-gray-800 border-b-2 border-gray-600"
     >
-      <div className="flex items-center">
-        <span className="text-2xl mr-3">{icon}</span>
-        <span className="text-lg">{title}</span>
+      <div className="flex items-center gap-2">
+        <span className="text-lg">{icon}</span>
+        <span className="font-black text-sm uppercase">{title}</span>
         {count !== undefined && (
-          <span className="bg-yellow-400 text-black px-3 py-1 ml-3 border-2 border-white font-black">
+          <span className="bg-yellow-400 text-black px-2 py-1 rounded-none font-black text-xs">
             {count}
           </span>
         )}
       </div>
-      <span className="text-2xl">{isExpanded ? '−' : '+'}</span>
-    </button>
+      <span className="text-xl font-black">{isExpanded ? '−' : '+'}</span>
+    </div>
   )
 
   return (
-    <div className="space-y-4">
-
+    <div className="h-full overflow-y-auto">
+      <SectionHeader
+        title="Data Sources"
+        count={dataSources.filter(ds => ds.isActive).length}
+        isExpanded={expandedSections.dataSources}
+        onToggle={() => toggleSection('dataSources')}
+        icon="📊"
+      />
 
       {expandedSections.dataSources && (
-        <div className="space-y-4">
+        <div className="p-3 space-y-3">
           {dataSources.map((source) => (
             <div
               key={source.id}
-              className={`border-4 border-black p-4 cursor-pointer transition-all font-mono ${source.isActive
-                  ? 'bg-red-400 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]'
-                  : 'bg-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]'
-                }`}
+              className={`border-4 border-black p-3 cursor-pointer transition-all ${
+                source.isActive
+                  ? 'bg-yellow-400 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]'
+                  : 'bg-gray-100 hover:bg-gray-200'
+              }`}
               onClick={() => updateActiveDataSource(source.id)}
             >
-              <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2 mb-2">
                 {source.isActive && (
-                  <div className="w-4 h-4 bg-black mr-2"></div>
+                  <span className="text-green-600 font-black text-lg">●</span>
                 )}
                 {source.isActive ? (
-                  <h3 className="font-black text-lg uppercase">{source.name}</h3>
+                  <span className="font-black text-lg">{source.name}</span>
                 ) : (
-                  <h3 className="font-black text-black -lg uppercase">{source.name}</h3>
+                  <span className="font-bold text-gray-600">{source.name}</span>
                 )}
               </div>
-
               {source.isActive ? (
-                  <p className="text-sm font-bold mb-2">Unit: {source.unit} • {source.field}</p>
-                ) : (
-                  <p className="text-sm font-bold mb-2 text-black">Unit: {source.unit} • {source.field}</p>
-                )}
-              
+                <div className="text-sm font-bold">
+                  Unit: {source.unit} • {source.field}
+                </div>
+              ) : (
+                <div className="text-sm text-gray-500">
+                  Unit: {source.unit} • {source.field}
+                </div>
+              )}
 
               {/* Color Rules - Compact inline layout */}
               {source.isActive && (
-                <div className="mt-4 bg-gray-100 border-2 border-black p-3">
-                  <h4 className="font-black text-sm uppercase mb-2">Color Rules</h4>
+                <div className="mt-3">
+                  <div className="text-xs font-black uppercase mb-2">Color Rules</div>
                   {source.thresholds.map((threshold, index) => (
-                    <div key={index} className="flex items-center space-x-2 mb-2 bg-white border-2 border-black p-2">
+                    <div key={index} className="flex items-center gap-1 mb-2 text-xs">
                       <select
                         value={threshold.operator}
                         onChange={(e) => updateThreshold(source.id, index, 'operator', e.target.value)}
                         onClick={(e) => e.stopPropagation()}
                         className="border-2 border-black px-2 py-1 bg-white text-black font-bold font-mono text-sm"
                       >
-                        <option value=">=">≥</option>
+                        <option value=">=">&gt;=</option>
                         <option value=">">&gt;</option>
-                        <option value="<=">&le;</option>
+                        <option value="<=">&lt;=</option>
                         <option value="<">&lt;</option>
                         <option value="=">=</option>
                       </select>
@@ -184,11 +193,12 @@ const Sidebar: React.FC<SidebarProps> = ({
                           className="bg-red-500 text-white px-2 py-1 border-2 border-black font-black hover:bg-red-600 text-sm"
                           title="Remove threshold"
                         >
-                          ✕
+                          ×
                         </button>
                       )}
                     </div>
                   ))}
+
                   <button
                     onClick={(e) => {
                       e.stopPropagation()
@@ -205,18 +215,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         </div>
       )}
 
-
-
-      {/* Instructions Footer */}
-      <div className="bg-orange-300 border-4 border-black p-4 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]">
-        <h3 className="font-black text-lg uppercase mb-2 font-mono">Quick Guide</h3>
-        <ul className="space-y-1 font-bold text-sm font-mono">
-          <li>• Draw polygons using the map tools</li>
-          <li>• Select data sources to change colors</li>
-          <li>• Configure color rules for visualization</li>
-          <li>• Click polygons to view detailed data</li>
-        </ul>
-      </div>
+      
     </div>
   )
 }

@@ -100,7 +100,7 @@ const TimelineSlider: React.FC<TimelineSliderProps> = ({ timeRange, onTimeChange
 
   const handleTrackClick = (e: React.MouseEvent) => {
     if (isDragging || !sliderRef.current) return
-    
+
     const rect = sliderRef.current.getBoundingClientRect()
     const x = e.clientX - rect.left
     const newPosition = Math.max(0, Math.min(totalHours - 1, pixelToPosition(x)))
@@ -134,22 +134,22 @@ const TimelineSlider: React.FC<TimelineSliderProps> = ({ timeRange, onTimeChange
   return (
     <div className="space-y-4">
       {/* Mode Toggle - Brutal buttons, straight */}
-      <div className="flex space-x-4">
+      <div className="flex gap-4">
         <button
-          className={`px-6 py-3 border-4 border-black font-black uppercase transition-all font-mono ${
+          className={`px-6 py-3 border-4 border-black font-black text-lg transition-all ${
             timeRange.mode === 'single'
-              ? 'bg-red-500 text-white shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]'
-              : 'bg-white text-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]'
+              ? 'bg-yellow-400 text-gray-900  shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transform-none'
+              : 'bg-white text-gray-600  hover:bg-gray-100 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]'
           }`}
           onClick={() => onTimeChange({ ...timeRange, mode: 'single' })}
         >
           Single Point
         </button>
         <button
-          className={`px-6 py-3 border-4 border-black font-black uppercase transition-all font-mono ${
+          className={`px-6 py-3 border-4 border-black font-black text-lg transition-all ${
             timeRange.mode === 'range'
-              ? 'bg-red-500 text-white shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]'
-              : 'bg-white text-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]'
+              ? 'bg-yellow-400 text-gray-900  shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transform-none'
+              : 'bg-white text-gray-600  hover:bg-gray-100 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]'
           }`}
           onClick={() => onTimeChange({ ...timeRange, mode: 'range' })}
         >
@@ -158,59 +158,58 @@ const TimelineSlider: React.FC<TimelineSliderProps> = ({ timeRange, onTimeChange
       </div>
 
       {/* Selected Time Display - Brutal box, straight */}
-      <div className="bg-black text-white p-4 border-4 border-white font-black uppercase text-lg shadow-[6px_6px_0px_0px_rgba(255,255,255,1)] font-mono">
+      <div className="bg-black text-white px-4 py-3 border-4 border-white font-black text-lg">
         {timeRange.mode === 'single'
           ? formatDate(timeRange.start)
           : `${formatDate(timeRange.start)} — ${formatDate(timeRange.end)}`}
+        {timeRange.mode === 'range' && (
+          <div className="text-sm font-bold mt-1">
+            {Math.round((endPosition - startPosition) / 24 * 10) / 10} days selected
+          </div>
+        )}
       </div>
-
-      {timeRange.mode === 'range' && (
-        <div className="bg-yellow-400 border-4 border-black p-3 font-black text-center font-mono">
-          {Math.round((endPosition - startPosition) / 24 * 10) / 10} days selected
-        </div>
-      )}
 
       {/* Timeline Slider - Harsh geometric styling, straight */}
       <div className="relative">
         <div
           ref={sliderRef}
-          className="relative h-12 bg-white border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] cursor-pointer"
+          className="h-12 bg-gray-200 border-4 border-black cursor-pointer relative"
           onClick={handleTrackClick}
         >
           {/* Selected Range Background */}
           {timeRange.mode === 'range' && (
             <div
-              className="absolute top-0 h-12 bg-green-300 border-l-4 border-r-4 border-black"
+              className="absolute top-0 h-full bg-yellow-400 border-2 border-black"
               style={{
                 left: `${(startPosition / totalHours) * 100}%`,
-                width: `${((endPosition - startPosition) / totalHours) * 100}%`
+                width: `${((endPosition - startPosition) / totalHours) * 100}%`,
               }}
             />
           )}
 
           {/* Current Time Indicator */}
           <div
-            className="absolute top-0 w-1 h-12 bg-red-600 border-2 border-white z-10"
+            className="absolute top-0 w-1 h-full bg-red-600 border border-black z-10"
             style={{ left: `${(currentPosition / totalHours) * 100}%` }}
           />
 
           {/* Slider handles - Brutal squares, straight */}
           {timeRange.mode === 'single' ? (
             <div
-              className="absolute top-0 w-6 h-12 bg-red-500 border-4 border-black cursor-grab active:cursor-grabbing shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] z-20"
-              style={{ left: `${(startPosition / totalHours) * 100}%`, transform: 'translateX(-50%)' }}
+              className="absolute top-1/2 w-6 h-6 bg-black border-2 border-white cursor-grab active:cursor-grabbing transform -translate-y-1/2 -translate-x-1/2 z-20"
+              style={{ left: `${(startPosition / totalHours) * 100}%` }}
               onMouseDown={(e) => handleMouseDown(e, 'single')}
             />
           ) : (
             <>
               <div
-                className="absolute top-0 w-6 h-12 bg-blue-500 border-4 border-black cursor-grab active:cursor-grabbing shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] z-20"
-                style={{ left: `${(startPosition / totalHours) * 100}%`, transform: 'translateX(-50%)' }}
+                className="absolute top-1/2 w-6 h-6 bg-green-600 border-2 border-white cursor-grab active:cursor-grabbing transform -translate-y-1/2 -translate-x-1/2 z-20"
+                style={{ left: `${(startPosition / totalHours) * 100}%` }}
                 onMouseDown={(e) => handleMouseDown(e, 'start')}
               />
               <div
-                className="absolute top-0 w-6 h-12 bg-green-500 border-4 border-black cursor-grab active:cursor-grabbing shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] z-20"
-                style={{ left: `${(endPosition / totalHours) * 100}%`, transform: 'translateX(-50%)' }}
+                className="absolute top-1/2 w-6 h-6 bg-red-600 border-2 border-white cursor-grab active:cursor-grabbing transform -translate-y-1/2 -translate-x-1/2 z-20"
+                style={{ left: `${(endPosition / totalHours) * 100}%` }}
                 onMouseDown={(e) => handleMouseDown(e, 'end')}
               />
             </>
@@ -218,13 +217,13 @@ const TimelineSlider: React.FC<TimelineSliderProps> = ({ timeRange, onTimeChange
         </div>
 
         {/* Time Labels - Brutal styling, straight */}
-        <div className="flex justify-between mt-2">
+        <div className="flex justify-between mt-2 text-xs font-black text-gray-900">
           {Array.from({ length: 5 }, (_, i) => {
             const dayOffset = (i * 7.5)
             const date = new Date(startDate)
             date.setDate(date.getDate() + dayOffset)
             return (
-              <div key={i} className="bg-black text-white px-2 py-1 text-xs font-black border-2 border-white font-mono">
+              <div key={i} className="text-center">
                 {date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
               </div>
             )
