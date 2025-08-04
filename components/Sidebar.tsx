@@ -113,14 +113,8 @@ const Sidebar: React.FC<SidebarProps> = ({
   return (
     <div className="space-y-4 p-4">
       {/* Data Sources Section */}
-      <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
-        <SectionHeader
-          title="Data Sources"
-          count={dataSources.filter(ds => ds.isActive).length}
-          isExpanded={expandedSections.dataSources}
-          onToggle={() => toggleSection('dataSources')}
-          icon="📊"
-        />
+      
+        
         
         {expandedSections.dataSources && (
           <div className="p-3 space-y-3">
@@ -233,7 +227,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             ))}
           </div>
         )}
-      </div>
+     
 
       {/* Selected Polygon Details */}
       {selectedPolygon && (

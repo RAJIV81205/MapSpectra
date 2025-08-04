@@ -226,7 +226,7 @@ const Map: React.FC<MapComponentProps> = ({
 
         // Create map instance
         const map = L.map(mapContainerRef.current!, {
-          center: [40.7128, -74.0060],
+          center: [22.5744, 88.3629],
           zoom: 10,
           minZoom: 8,
           maxZoom: 15,
