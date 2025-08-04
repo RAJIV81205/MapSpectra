@@ -17,7 +17,6 @@ const Sidebar: React.FC<SidebarProps> = ({
   setDataSources,
   polygons,
   setPolygons,
-  selectedPolygon,
   setSelectedPolygon
 }) => {
   const [expandedSections, setExpandedSections] = useState({
@@ -43,13 +42,13 @@ const Sidebar: React.FC<SidebarProps> = ({
       prev.map(source =>
         source.id === sourceId
           ? {
-              ...source,
-              thresholds: source.thresholds.map((threshold, index) =>
-                index === thresholdIndex
-                  ? { ...threshold, [field]: value }
-                  : threshold
-              )
-            }
+            ...source,
+            thresholds: source.thresholds.map((threshold, index) =>
+              index === thresholdIndex
+                ? { ...threshold, [field]: value }
+                : threshold
+            )
+          }
           : source
       )
     )
@@ -60,12 +59,12 @@ const Sidebar: React.FC<SidebarProps> = ({
       prev.map(source =>
         source.id === sourceId
           ? {
-              ...source,
-              thresholds: [
-                ...source.thresholds,
-                { operator: '>=', value: 0, color: '#3B82F6' }
-              ]
-            }
+            ...source,
+            thresholds: [
+              ...source.thresholds,
+              { operator: '>=', value: 0, color: '#3B82F6' }
+            ]
+          }
           : source
       )
     )
@@ -76,9 +75,9 @@ const Sidebar: React.FC<SidebarProps> = ({
       prev.map(source =>
         source.id === sourceId
           ? {
-              ...source,
-              thresholds: source.thresholds.filter((_, index) => index !== thresholdIndex)
-            }
+            ...source,
+            thresholds: source.thresholds.filter((_, index) => index !== thresholdIndex)
+          }
           : source
       )
     )
@@ -93,193 +92,125 @@ const Sidebar: React.FC<SidebarProps> = ({
   }) => (
     <button
       onClick={onToggle}
-      className="w-full flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
+      className="w-full bg-black text-white p-4 border-4 border-white shadow-[6px_6px_0px_0px_rgba(255,255,255,1)] hover:shadow-[8px_8px_0px_0px_rgba(255,255,255,1)] transition-all font-black uppercase text-left flex items-center justify-between mb-4 font-mono"
     >
-      <div className="flex items-center space-x-2">
-        <span>{icon}</span>
-        <span className="font-medium text-gray-800 dark:text-gray-200">{title}</span>
+      <div className="flex items-center">
+        <span className="text-2xl mr-3">{icon}</span>
+        <span className="text-lg">{title}</span>
         {count !== undefined && (
-          <span className="text-xs bg-gray-200 dark:bg-gray-600 text-gray-600 dark:text-gray-300 px-2 py-1 rounded-full">
+          <span className="bg-yellow-400 text-black px-3 py-1 ml-3 border-2 border-white font-black">
             {count}
           </span>
         )}
       </div>
-      <span className={`transform transition-transform ${isExpanded ? 'rotate-180' : ''}`}>
-        ↓
-      </span>
+      <span className="text-2xl">{isExpanded ? '−' : '+'}</span>
     </button>
   )
 
   return (
-    <div className="space-y-4 p-4">
-      {/* Data Sources Section */}
-      
-        
-        
-        {expandedSections.dataSources && (
-          <div className="p-3 space-y-3">
-            {dataSources.map((source) => (
-              <div key={source.id} className="space-y-3">
-                <div
-                  className={`p-3 rounded-lg border-2 cursor-pointer transition-all ${
-                    source.isActive
-                      ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                      : 'border-gray-200 dark:border-gray-600 hover:border-gray-300'
-                  }`}
-                  onClick={() => updateActiveDataSource(source.id)}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-2">
-                      {/* Active indicator */}
-                      {source.isActive && (
-                        <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                      )}
-                      <div>
-                        <h4 className="font-medium text-gray-800 dark:text-gray-200">{source.name}</h4>
-                        <div className="text-xs text-gray-500 dark:text-gray-400">
-                          Unit: {source.unit} • {source.field}
-                        </div>
-                      </div>
-                    </div>
-                    {source.isActive && (
-                      <div className="text-blue-500 text-sm">Active</div>
-                    )}
-                  </div>
+    <div className="space-y-4">
 
-                  {/* Color Rules */}
-                  {source.isActive && (
-                    <div className="mt-3 space-y-2">
-                      <div className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center space-x-1">
-                        <span>🎨</span>
-                        <span>Color Rules</span>
-                      </div>
-                      
-                      {source.thresholds.map((threshold, index) => (
-                        <div key={index} className="flex items-center space-x-2 text-xs">
-                          <select
-                            value={threshold.operator}
-                            onChange={(e) => updateThreshold(source.id, index, 'operator', e.target.value)}
-                            onClick={(e) => e.stopPropagation()}
-                            className="border border-gray-300 dark:border-gray-600 rounded px-2 py-1 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200"
-                          >
-                            <option value=">=">&gt;=</option>
-                            <option value=">">&gt;</option>
-                            <option value="<=">&lt;=</option>
-                            <option value="<">&lt;</option>
-                            <option value="=">=</option>
-                          </select>
-                          
-                          <input
-                            type="number"
-                            value={threshold.value}
-                            onChange={(e) => updateThreshold(source.id, index, 'value', parseFloat(e.target.value))}
-                            onClick={(e) => e.stopPropagation()}
-                            className="border border-gray-300 dark:border-gray-600 rounded px-2 py-1 w-16 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200"
-                            placeholder="0"
-                          />
-                          
-                          <input
-                            type="color"
-                            value={threshold.color}
-                            onChange={(e) => updateThreshold(source.id, index, 'color', e.target.value)}
-                            onClick={(e) => e.stopPropagation()}
-                            className="w-8 h-6 border border-gray-300 dark:border-gray-600 rounded cursor-pointer"
-                            id={`color-${source.id}-${index}`}
-                          />
-                          
-                          <div
-                            className="px-2 py-1 rounded text-white text-xs font-medium min-w-16 text-center"
-                            style={{ backgroundColor: threshold.color }}
-                            onClick={(e) => e.stopPropagation()}
-                            title={threshold.color.toUpperCase()}
-                          >
-                            {threshold.color.toUpperCase()}
-                          </div>
-                          
-                          {source.thresholds.length > 1 && (
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                removeThreshold(source.id, index)
-                              }}
-                              className="text-red-500 hover:text-red-700 px-1"
-                              title="Remove threshold"
-                            >
-                              ✕
-                            </button>
-                          )}
-                        </div>
-                      ))}
-                      
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          addThreshold(source.id)
-                        }}
-                        className="text-xs text-blue-500 hover:text-blue-700 mt-2"
-                      >
-                        + Add Color Rule
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-     
 
-      {/* Selected Polygon Details */}
-      {selectedPolygon && (
-        <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
-          <SectionHeader
-            title="Selected Polygon"
-            isExpanded={expandedSections.details}
-            onToggle={() => toggleSection('details')}
-            icon="🔍"
-          />
-          
-          {expandedSections.details && (
-            <div className="p-3 space-y-3">
-              <div>
-                <h4 className="font-medium text-gray-800 dark:text-gray-200">{selectedPolygon.name}</h4>
-                <div className="text-xs text-gray-500 dark:text-gray-400">
-                  Data Source: {dataSources.find(ds => ds.id === selectedPolygon.dataSourceId)?.name}
-                </div>
+      {expandedSections.dataSources && (
+        <div className="space-y-4">
+          {dataSources.map((source) => (
+            <div
+              key={source.id}
+              className={`border-4 border-black p-4 cursor-pointer transition-all font-mono ${source.isActive
+                  ? 'bg-red-400 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]'
+                  : 'bg-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]'
+                }`}
+              onClick={() => updateActiveDataSource(source.id)}
+            >
+              <div className="flex items-center justify-between mb-2">
+                {source.isActive && (
+                  <div className="w-4 h-4 bg-black mr-2"></div>
+                )}
+                {source.isActive ? (
+                  <h3 className="font-black text-lg uppercase">{source.name}</h3>
+                ) : (
+                  <h3 className="font-black text-black -lg uppercase">{source.name}</h3>
+                )}
               </div>
+
+              {source.isActive ? (
+                  <p className="text-sm font-bold mb-2">Unit: {source.unit} • {source.field}</p>
+                ) : (
+                  <p className="text-sm font-bold mb-2 text-black">Unit: {source.unit} • {source.field}</p>
+                )}
               
-              <div>
-                <h5 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Current Values</h5>
-                <div className="space-y-2">
-                  {Object.entries(selectedPolygon.data).map(([field, value]) => {
-                    const dataSource = dataSources.find(ds => ds.field === field)
-                    const unit = dataSource?.unit || ''
-                    
-                    return (
-                      <div key={field} className="flex justify-between items-center py-1">
-                        <span className="text-sm text-gray-600 dark:text-gray-400 capitalize">
-                          {dataSource?.name || field}
-                        </span>
-                        <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
-                          {value !== null && value !== undefined && !isNaN(value) 
-                            ? `${value.toFixed(1)}${unit}` 
-                            : 'N/A'
-                          }
-                        </span>
-                      </div>
-                    )
-                  })}
+
+              {/* Color Rules - Compact inline layout */}
+              {source.isActive && (
+                <div className="mt-4 bg-gray-100 border-2 border-black p-3">
+                  <h4 className="font-black text-sm uppercase mb-2">Color Rules</h4>
+                  {source.thresholds.map((threshold, index) => (
+                    <div key={index} className="flex items-center space-x-2 mb-2 bg-white border-2 border-black p-2">
+                      <select
+                        value={threshold.operator}
+                        onChange={(e) => updateThreshold(source.id, index, 'operator', e.target.value)}
+                        onClick={(e) => e.stopPropagation()}
+                        className="border-2 border-black px-2 py-1 bg-white text-black font-bold font-mono text-sm"
+                      >
+                        <option value=">=">≥</option>
+                        <option value=">">&gt;</option>
+                        <option value="<=">&le;</option>
+                        <option value="<">&lt;</option>
+                        <option value="=">=</option>
+                      </select>
+                      <input
+                        type="number"
+                        value={threshold.value}
+                        onChange={(e) => updateThreshold(source.id, index, 'value', parseFloat(e.target.value))}
+                        onClick={(e) => e.stopPropagation()}
+                        className="border-2 border-black px-2 py-1 w-16 bg-white text-black font-bold font-mono text-sm"
+                        placeholder="0"
+                      />
+                      <input
+                        type="color"
+                        value={threshold.color}
+                        onChange={(e) => updateThreshold(source.id, index, 'color', e.target.value)}
+                        onClick={(e) => e.stopPropagation()}
+                        className="w-8 h-8 border-2 border-black cursor-pointer"
+                        id={`color-${source.id}-${index}`}
+                        title={threshold.color.toUpperCase()}
+                      />
+                      {source.thresholds.length > 1 && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            removeThreshold(source.id, index)
+                          }}
+                          className="bg-red-500 text-white px-2 py-1 border-2 border-black font-black hover:bg-red-600 text-sm"
+                          title="Remove threshold"
+                        >
+                          ✕
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      addThreshold(source.id)
+                    }}
+                    className="bg-green-500 text-white px-3 py-1 border-2 border-black font-black text-xs uppercase hover:bg-green-600 mt-2"
+                  >
+                    + Add Color Rule
+                  </button>
                 </div>
-              </div>
+              )}
             </div>
-          )}
+          ))}
         </div>
       )}
 
+
+
       {/* Instructions Footer */}
-      <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3">
-        <h5 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Quick Guide</h5>
-        <ul className="text-xs text-gray-600 dark:text-gray-400 space-y-1">
+      <div className="bg-orange-300 border-4 border-black p-4 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]">
+        <h3 className="font-black text-lg uppercase mb-2 font-mono">Quick Guide</h3>
+        <ul className="space-y-1 font-bold text-sm font-mono">
           <li>• Draw polygons using the map tools</li>
           <li>• Select data sources to change colors</li>
           <li>• Configure color rules for visualization</li>

@@ -30,6 +30,8 @@ const Map: React.FC<MapComponentProps> = ({
   const { theme } = useTheme()
   const [isClient, setIsClient] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
+  // Add polygon counter state
+  const [polygonCounter, setPolygonCounter] = useState(1)
 
   useEffect(() => {
     setIsClient(true)
@@ -66,11 +68,9 @@ const Map: React.FC<MapComponentProps> = ({
         if (timeRange.mode === 'single') {
           const hourIndex = Math.floor((timeRange.start.getTime() - new Date(startDateStr).getTime()) / (1000 * 60 * 60))
           const value = values[Math.min(hourIndex, values.length - 1)]
-          
           if (value === null || value === undefined || isNaN(value)) {
             throw new Error('No data available for selected time')
           }
-          
           return value
         } else {
           const sum = validValues.reduce((acc: number, val: number) => acc + val, 0)
@@ -81,10 +81,7 @@ const Map: React.FC<MapComponentProps> = ({
       }
     } catch (error) {
       console.error('Error fetching weather data:', error)
-      
-      // Show toast notification for API errors with dismiss previous toasts
       toast.dismiss()
-      
       if (error instanceof Error) {
         if (error.message.includes('API request failed')) {
           toast.error('Weather API is currently unavailable. Please try again later.')
@@ -96,26 +93,22 @@ const Map: React.FC<MapComponentProps> = ({
       } else {
         toast.error('Failed to fetch weather data. Please check your connection.')
       }
-
       return null
     }
   }
 
-  // Fixed: Corrected polygon color calculation with better logic
   const calculatePolygonColor = (value: number | null, dataSource: DataSource): string => {
     if (value === null || value === undefined || isNaN(value)) {
       return '#cccccc'
     }
 
-    // Sort thresholds by value in descending order for proper evaluation
     const sortedThresholds = [...dataSource.thresholds].sort((a, b) => {
       if (a.operator.includes('>=') || a.operator.includes('>')) {
-        return b.value - a.value // Descending for >= operators
+        return b.value - a.value
       }
-      return a.value - b.value // Ascending for < operators
+      return a.value - b.value
     })
 
-    // Process thresholds in sorted order
     for (const threshold of sortedThresholds) {
       let conditionMet = false
 
@@ -144,11 +137,9 @@ const Map: React.FC<MapComponentProps> = ({
       }
     }
 
-    // Return default color if no thresholds match
     return '#cccccc'
   }
 
-  // Separate effect for updating polygon colors without reinitializing the map
   useEffect(() => {
     const updatePolygonColors = async () => {
       if (!polygons.length || !mapRef.current) return
@@ -161,21 +152,17 @@ const Map: React.FC<MapComponentProps> = ({
       try {
         const updatedPolygons = await Promise.all(
           polygons.map(async (polygon) => {
-            // Get polygon centroid
             const bounds = polygon.layer.getBounds()
             const center = bounds.getCenter()
 
-            // Fetch weather data
             const value = await fetchWeatherData(center.lat, center.lng, activeDataSource.field)
 
-            // Update polygon data
             const updatedPolygon = {
               ...polygon,
               dataSourceId: activeDataSource.id,
               data: { [activeDataSource.field]: value }
             }
 
-            // Apply color based on fetched data
             const color = calculatePolygonColor(value, activeDataSource)
             polygon.layer.setStyle({
               fillColor: color,
@@ -201,7 +188,6 @@ const Map: React.FC<MapComponentProps> = ({
     updatePolygonColors()
   }, [timeRange, dataSources])
 
-  // Initialize map - REMOVED dataSources from dependency array to prevent re-initialization
   useEffect(() => {
     if (!isClient || !mapContainerRef.current) return
 
@@ -216,7 +202,6 @@ const Map: React.FC<MapComponentProps> = ({
           DELETED: 'draw:deleted'
         }
 
-        // Fix for default markers
         delete (L.Icon.Default.prototype as any)._getIconUrl
         L.Icon.Default.mergeOptions({
           iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
@@ -224,7 +209,6 @@ const Map: React.FC<MapComponentProps> = ({
           shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
         })
 
-        // Create map instance
         const map = L.map(mapContainerRef.current!, {
           center: [22.5744, 88.3629],
           zoom: 10,
@@ -233,7 +217,6 @@ const Map: React.FC<MapComponentProps> = ({
           zoomControl: true
         })
 
-        // Add tile layer
         const tileLayer = theme === 'dark'
           ? L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
               attribution: '© OpenStreetMap contributors © CARTO',
@@ -247,12 +230,10 @@ const Map: React.FC<MapComponentProps> = ({
 
         tileLayer.addTo(map)
 
-        // Create feature group for drawn items
         const drawnItems = new L.FeatureGroup()
         map.addLayer(drawnItems)
         drawnItemsRef.current = drawnItems
 
-        // Initialize drawing controls
         const DrawControl = (L as any).Control?.Draw
         const drawControl = new DrawControl({
           position: 'topright',
@@ -262,8 +243,9 @@ const Map: React.FC<MapComponentProps> = ({
               showArea: true,
               showLength: true,
               shapeOptions: {
-                color: '#007cba',
-                fillOpacity: 0.3
+                color: '#ff0000',
+                fillOpacity: 0.3,
+                weight: 4
               }
             },
             rectangle: false,
@@ -280,42 +262,37 @@ const Map: React.FC<MapComponentProps> = ({
 
         map.addControl(drawControl)
 
-        // Handle polygon creation
         map.on(DrawEvents.CREATED, async (e: any) => {
           const layer = e.layer
 
-          // Add temporary styling
           layer.setStyle({
-            color: '#ff6b6b',
-            fillColor: '#ff6b6b',
-            fillOpacity: 0.3,
-            weight: 2,
-            dashArray: '5, 5'
+            color: '#ff0000',
+            fillColor: '#ff0000',
+            fillOpacity: 0.5,
+            weight: 4,
+            dashArray: '10, 10'
           })
 
-          // Create confirmation popup
           const confirmPopup = L.popup({
             closeButton: false,
             autoClose: false,
             closeOnEscapeKey: true,
-            className: 'polygon-confirm-popup'
+            className: 'brutal-popup'
           })
-            .setLatLng(layer.getBounds().getCenter())
-            .setContent(`
-              <div class="text-center">
-                <p class="mb-2 text-sm">Save this polygon?</p>
-                <button id="save-polygon" class="bg-green-500 text-white px-2 py-1 rounded mr-2 text-xs">✓ Save</button>
-                <button id="cancel-polygon" class="bg-red-500 text-white px-2 py-1 rounded text-xs">✗ Cancel</button>
-              </div>
-            `)
-            .openOn(map)
+          .setLatLng(layer.getBounds().getCenter())
+          .setContent(`
+            <div style="text-align: center; font-family: monospace; font-weight: bold;">
+              <div style="margin-bottom: 10px;">Save this polygon?</div>
+              <button id="save-polygon" style="margin: 5px; padding: 5px 10px; background: #00ff00; border: 2px solid #000; font-weight: bold;">✓ SAVE</button>
+              <button id="cancel-polygon" style="margin: 5px; padding: 5px 10px; background: #ff0000; border: 2px solid #000; font-weight: bold; color: white;">✗ CANCEL</button>
+            </div>
+          `)
+          .openOn(map)
 
-          // Handle save confirmation
           const handleSave = async () => {
             const polygonId = `polygon_${Date.now()}`
             drawnItems.addLayer(layer)
 
-            // Get active data source
             const activeDataSource = dataSources.find(ds => ds.isActive)
             if (!activeDataSource) {
               map.closePopup()
@@ -324,25 +301,21 @@ const Map: React.FC<MapComponentProps> = ({
               return
             }
 
-            // Get polygon centroid for API call
             const bounds = layer.getBounds()
             const center = bounds.getCenter()
 
-            // Show loading state
             layer.setStyle({
-              color: '#ffc107',
-              fillColor: '#ffc107',
-              fillOpacity: 0.5,
-              weight: 2,
-              dashArray: null
+              color: '#ffff00',
+              fillColor: '#ffff00',
+              fillOpacity: 0.7,
+              weight: 4,
+              dashArray: '5, 5'
             })
 
-            // Show loading toast
             toast.dismiss()
-            const loadingToast = toast.loading('Fetching weather data...')
+            const loadingToast = toast.loading('FETCHING WEATHER DATA...')
 
             try {
-              // Fetch real weather data
               const value = await fetchWeatherData(center.lat, center.lng, activeDataSource.field)
 
               const polygonData: PolygonData = {
@@ -350,28 +323,27 @@ const Map: React.FC<MapComponentProps> = ({
                 layer: layer,
                 dataSourceId: activeDataSource.id,
                 data: { [activeDataSource.field]: value },
-                name: `Polygon ${polygons.length + 1}`
+                name: `Polygon ${polygonCounter}` // Use the counter here
               }
 
-              // Apply color based on fetched data
               const color = calculatePolygonColor(value, activeDataSource)
               layer.setStyle({
                 fillColor: color,
-                color: color,
-                fillOpacity: 0.6,
-                weight: 2,
+                color: '#000000',
+                fillOpacity: 0.7,
+                weight: 4,
                 dashArray: null
               })
 
-              // Add click handler
               layer.on('click', () => {
                 setSelectedPolygon(polygonData)
               })
 
               setPolygons(prev => [...prev, polygonData])
-              toast.success('Polygon created successfully!', { id: loadingToast })
+              setPolygonCounter(prev => prev + 1) // Increment counter after successful creation
+              toast.success('POLYGON CREATED SUCCESSFULLY!', { id: loadingToast })
             } catch (error) {
-              toast.error('Failed to create polygon', { id: loadingToast })
+              toast.error('FAILED TO CREATE POLYGON', { id: loadingToast })
               map.removeLayer(layer)
             }
 
@@ -383,7 +355,6 @@ const Map: React.FC<MapComponentProps> = ({
             map.closePopup()
           }
 
-          // Add event listeners
           setTimeout(() => {
             const saveBtn = document.getElementById('save-polygon')
             const cancelBtn = document.getElementById('cancel-polygon')
@@ -399,7 +370,7 @@ const Map: React.FC<MapComponentProps> = ({
           })
           setSelectedPolygon(null)
           toast.dismiss()
-          toast.success('Polygon(s) deleted')
+          toast.success('POLYGON(S) DELETED')
         })
 
         mapRef.current = map
@@ -407,7 +378,7 @@ const Map: React.FC<MapComponentProps> = ({
       } catch (err) {
         console.error('Failed to initialize map:', err)
         toast.dismiss()
-        toast.error('Failed to initialize map')
+        toast.error('FAILED TO INITIALIZE MAP')
         setIsLoading(false)
       }
     }
@@ -420,22 +391,25 @@ const Map: React.FC<MapComponentProps> = ({
         mapRef.current = null
       }
     }
-  }, [isClient, theme]) // REMOVED dataSources from here
+  }, [isClient, theme])
 
   if (!isClient) {
     return (
-      <div className="h-full flex items-center justify-center">
-        <p>Loading map...</p>
+      <div className="h-[600px] border-4 border-black bg-gray-200 flex items-center justify-center font-mono font-bold">
+        Loading map...
       </div>
     )
   }
 
   return (
-    <div className="relative h-full">
-      <div ref={mapContainerRef} className="h-full w-full" />
+    <div className="relative">
+      <div
+        ref={mapContainerRef}
+        className="h-[600px] border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]"
+      />
       {isLoading && (
-        <div className="absolute top-4 right-4 bg-blue-500 text-white px-3 py-1 rounded-md text-sm">
-          Updating polygons...
+        <div className="absolute top-4 right-4 bg-yellow-400 text-black px-4 py-2 border-4 border-black font-mono font-bold shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+          UPDATING POLYGONS...
         </div>
       )}
     </div>

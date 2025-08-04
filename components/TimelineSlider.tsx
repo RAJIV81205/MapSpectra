@@ -18,11 +18,11 @@ const TimelineSlider: React.FC<TimelineSliderProps> = ({ timeRange, onTimeChange
   const startDate = new Date(currentDate)
   startDate.setDate(startDate.getDate() - 15)
   startDate.setHours(0, 0, 0, 0)
-  
+
   const endDate = new Date(currentDate)
   endDate.setDate(endDate.getDate() + 15)
   endDate.setHours(23, 59, 59, 999)
-  
+
   const totalHours = 30 * 24
 
   const positionToDate = (hourPosition: number) => {
@@ -61,12 +61,12 @@ const TimelineSlider: React.FC<TimelineSliderProps> = ({ timeRange, onTimeChange
 
   const handleMouseMove = useCallback((e: MouseEvent) => {
     if (!isDragging || !sliderRef.current) return
-    
+
     const rect = sliderRef.current.getBoundingClientRect()
     const x = e.clientX - rect.left
     const newPosition = Math.max(0, Math.min(totalHours - 1, pixelToPosition(x)))
     const newDate = positionToDate(newPosition)
-    
+
     if (timeRange.mode === 'single') {
       onTimeChange({
         ...timeRange,
@@ -105,7 +105,7 @@ const TimelineSlider: React.FC<TimelineSliderProps> = ({ timeRange, onTimeChange
     const x = e.clientX - rect.left
     const newPosition = Math.max(0, Math.min(totalHours - 1, pixelToPosition(x)))
     const newDate = positionToDate(newPosition)
-    
+
     if (timeRange.mode === 'single') {
       onTimeChange({
         ...timeRange,
@@ -120,7 +120,6 @@ const TimelineSlider: React.FC<TimelineSliderProps> = ({ timeRange, onTimeChange
     if (isDragging) {
       document.addEventListener('mousemove', handleMouseMove)
       document.addEventListener('mouseup', handleMouseUp)
-      
       return () => {
         document.removeEventListener('mousemove', handleMouseMove)
         document.removeEventListener('mouseup', handleMouseUp)
@@ -133,115 +132,99 @@ const TimelineSlider: React.FC<TimelineSliderProps> = ({ timeRange, onTimeChange
   const endPosition = dateToPosition(timeRange.end)
 
   return (
-    <div className="w-full p-6">
-      {/* Mode Toggle */}
-      <div className="mb-6 flex justify-center">
-        <div className="bg-gray-200 dark:bg-gray-700 p-1 rounded-lg">
-          <button
-            className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
-              timeRange.mode === 'single' 
-                ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm' 
-                : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'
-            }`}
-            onClick={() => onTimeChange({ ...timeRange, mode: 'single' })}
-          >
-            Single Point
-          </button>
-          <button
-            className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
-              timeRange.mode === 'range' 
-                ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm' 
-                : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'
-            }`}
-            onClick={() => onTimeChange({ ...timeRange, mode: 'range' })}
-          >
-            Time Range
-          </button>
-        </div>
+    <div className="space-y-4">
+      {/* Mode Toggle - Brutal buttons, straight */}
+      <div className="flex space-x-4">
+        <button
+          className={`px-6 py-3 border-4 border-black font-black uppercase transition-all font-mono ${
+            timeRange.mode === 'single'
+              ? 'bg-red-500 text-white shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]'
+              : 'bg-white text-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]'
+          }`}
+          onClick={() => onTimeChange({ ...timeRange, mode: 'single' })}
+        >
+          Single Point
+        </button>
+        <button
+          className={`px-6 py-3 border-4 border-black font-black uppercase transition-all font-mono ${
+            timeRange.mode === 'range'
+              ? 'bg-red-500 text-white shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]'
+              : 'bg-white text-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]'
+          }`}
+          onClick={() => onTimeChange({ ...timeRange, mode: 'range' })}
+        >
+          Time Range
+        </button>
       </div>
 
-      {/* Selected Time Display */}
-      <div className="mb-6 text-center">
-        <div className="text-xl font-semibold text-gray-900 dark:text-white">
-          {timeRange.mode === 'single'
-            ? formatDate(timeRange.start)
-            : `${formatDate(timeRange.start)} — ${formatDate(timeRange.end)}`
-          }
-        </div>
-        {timeRange.mode === 'range' && (
-          <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-            {Math.round((endPosition - startPosition) / 24 * 10) / 10} days selected
-          </div>
-        )}
+      {/* Selected Time Display - Brutal box, straight */}
+      <div className="bg-black text-white p-4 border-4 border-white font-black uppercase text-lg shadow-[6px_6px_0px_0px_rgba(255,255,255,1)] font-mono">
+        {timeRange.mode === 'single'
+          ? formatDate(timeRange.start)
+          : `${formatDate(timeRange.start)} — ${formatDate(timeRange.end)}`}
       </div>
 
-      {/* Timeline Slider */}
+      {timeRange.mode === 'range' && (
+        <div className="bg-yellow-400 border-4 border-black p-3 font-black text-center font-mono">
+          {Math.round((endPosition - startPosition) / 24 * 10) / 10} days selected
+        </div>
+      )}
+
+      {/* Timeline Slider - Harsh geometric styling, straight */}
       <div className="relative">
         <div
           ref={sliderRef}
-          className="relative h-2 bg-gray-200 dark:bg-gray-700 rounded-full cursor-pointer"
+          className="relative h-12 bg-white border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] cursor-pointer"
           onClick={handleTrackClick}
         >
           {/* Selected Range Background */}
           {timeRange.mode === 'range' && (
             <div
-              className="absolute h-full bg-blue-500 rounded-full"
+              className="absolute top-0 h-12 bg-green-300 border-l-4 border-r-4 border-black"
               style={{
                 left: `${(startPosition / totalHours) * 100}%`,
-                width: `${((endPosition - startPosition) / totalHours) * 100}%`,
+                width: `${((endPosition - startPosition) / totalHours) * 100}%`
               }}
             />
           )}
-          
+
           {/* Current Time Indicator */}
           <div
-            className="absolute w-0.5 h-6 bg-red-500 rounded-full transform -translate-y-2"
+            className="absolute top-0 w-1 h-12 bg-red-600 border-2 border-white z-10"
             style={{ left: `${(currentPosition / totalHours) * 100}%` }}
           />
-          
-          {/* Slider Handles */}
+
+          {/* Slider handles - Brutal squares, straight */}
           {timeRange.mode === 'single' ? (
             <div
-              className={`absolute w-6 h-6 bg-white dark:bg-gray-800 border-2 border-blue-500 rounded-full shadow-lg transform -translate-y-2 -translate-x-3 transition-all ${
-                isDragging ? 'scale-110' : 'hover:scale-105'
-              } cursor-grab active:cursor-grabbing`}
-              style={{ left: `${(startPosition / totalHours) * 100}%` }}
+              className="absolute top-0 w-6 h-12 bg-red-500 border-4 border-black cursor-grab active:cursor-grabbing shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] z-20"
+              style={{ left: `${(startPosition / totalHours) * 100}%`, transform: 'translateX(-50%)' }}
               onMouseDown={(e) => handleMouseDown(e, 'single')}
             />
           ) : (
             <>
               <div
-                className={`absolute w-6 h-6 bg-white dark:bg-gray-800 border-2 border-blue-500 rounded-full shadow-lg transform -translate-y-2 -translate-x-3 transition-all ${
-                  isDragging && dragTarget === 'start' ? 'scale-110' : 'hover:scale-105'
-                } cursor-grab active:cursor-grabbing`}
-                style={{ left: `${(startPosition / totalHours) * 100}%` }}
+                className="absolute top-0 w-6 h-12 bg-blue-500 border-4 border-black cursor-grab active:cursor-grabbing shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] z-20"
+                style={{ left: `${(startPosition / totalHours) * 100}%`, transform: 'translateX(-50%)' }}
                 onMouseDown={(e) => handleMouseDown(e, 'start')}
               />
               <div
-                className={`absolute w-6 h-6 bg-white dark:bg-gray-800 border-2 border-blue-500 rounded-full shadow-lg transform -translate-y-2 -translate-x-3 transition-all ${
-                  isDragging && dragTarget === 'end' ? 'scale-110' : 'hover:scale-105'
-                } cursor-grab active:cursor-grabbing`}
-                style={{ left: `${(endPosition / totalHours) * 100}%` }}
+                className="absolute top-0 w-6 h-12 bg-green-500 border-4 border-black cursor-grab active:cursor-grabbing shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] z-20"
+                style={{ left: `${(endPosition / totalHours) * 100}%`, transform: 'translateX(-50%)' }}
                 onMouseDown={(e) => handleMouseDown(e, 'end')}
               />
             </>
           )}
         </div>
 
-        {/* Time Labels */}
-        <div className="mt-4 relative h-6">
+        {/* Time Labels - Brutal styling, straight */}
+        <div className="flex justify-between mt-2">
           {Array.from({ length: 5 }, (_, i) => {
             const dayOffset = (i * 7.5)
-            const position = (dayOffset / 30) * 100
             const date = new Date(startDate)
             date.setDate(date.getDate() + dayOffset)
-            
             return (
-              <div
-                key={i}
-                className="absolute text-xs text-gray-500 dark:text-gray-400 transform -translate-x-1/2"
-                style={{ left: `${position}%` }}
-              >
+              <div key={i} className="bg-black text-white px-2 py-1 text-xs font-black border-2 border-white font-mono">
                 {date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
               </div>
             )
