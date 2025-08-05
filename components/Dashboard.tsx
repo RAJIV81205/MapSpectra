@@ -130,16 +130,16 @@ const Dashboard: React.FC = () => {
       />
 
       {/* Main Container - 80% width, centered */}
-      <div className="w-4/5 mx-auto py-6 space-y-6">
+      <div className="w-4/5 mx-auto py-6 space-y-6 font-ubuntu">
 
         {/* Header Box */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <h1 className="text-2xl font-bold text-gray-900">Weather Analysis Dashboard</h1>
+        <div className="bg-white rounded-lg shadow-sm border border-gray-700 p-6">
+          <h1 className="text-2xl font-bold text-gray-900">Map Spectra</h1>
           <p className="text-gray-600 mt-1">Analyze weather patterns using interactive maps and time controls</p>
         </div>
 
         {/* Timeline Box */}
-        <div id="timeline-box" className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div id="timeline-box" className="bg-white rounded-lg shadow-sm border border-gray-700 p-6">
           <div className="flex items-center mb-4">
             <h2 className="text-lg font-semibold text-gray-900 flex items-center space-x-2">
               <span>⏰</span>
@@ -153,8 +153,8 @@ const Dashboard: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
           {/* Map Box */}
-          <div id="weather-map-box" className="lg:col-span-2 bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-            <div className="p-4 border-b border-gray-200 bg-gray-50">
+          <div id="weather-map-box" className="lg:col-span-2 bg-white rounded-lg shadow-sm border border-gray-700 overflow-hidden">
+            <div className="p-4 border-b border-gray-500 bg-gray-50">
               <h2 className="text-lg font-semibold text-gray-900 flex items-center space-x-2">
                 <span>🗺️</span>
                 <span>Weather Map</span>
@@ -174,7 +174,7 @@ const Dashboard: React.FC = () => {
           </div>
 
           {/* Sidebar Box */}
-          <div id="sidebar-box" className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+          <div id="sidebar-box" className="bg-white rounded-lg shadow-sm border border-gray-700 overflow-hidden">
             <div className="h-[568px] overflow-y-auto">
               <Sidebar
                 dataSources={dataSources}

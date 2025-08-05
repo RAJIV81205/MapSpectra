@@ -171,7 +171,7 @@ const PolygonGrid: React.FC<PolygonGridProps> = ({
                       value={editingName}
                       onChange={(e) => setEditingName(e.target.value)}
                       onKeyDown={handleKeyPress}
-                      className="w-full px-2 py-1 text-sm border border-blue-300 rounded focus:outline-none focus:border-blue-500"
+                      className="w-full px-2 py-1 text-sm border border-blue-300 rounded focus:outline-none focus:border-blue-500 text-black"
                       placeholder="Enter region name"
                       autoFocus
                       onClick={(e) => e.stopPropagation()}

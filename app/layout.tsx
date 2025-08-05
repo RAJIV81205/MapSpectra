@@ -1,5 +1,24 @@
 import './globals.css'
-import {Providers} from "../utils/ThemeProvider"
+import { Metadata } from 'next'
+import {Ubuntu} from 'next/font/google'
+
+const ubuntu = Ubuntu({
+  subsets: ['latin'],
+  weight: ['400', '500', '700'],
+  variable: '--font-ubuntu',
+})
+
+export const metadata: Metadata = {
+  title: 'MapSpectra',
+  description: 'Interactive mapping and geospatial visualization platform',
+  icons: {
+    icon: '/favicon.ico',
+    apple: '/apple-touch-icon.png',
+  },
+  manifest: '/site.webmanifest',
+  themeColor: '#ffffff',
+  viewport: 'width=device-width, initial-scale=1.0',
+}
 
 export default function RootLayout({
   children,
@@ -8,10 +27,8 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body>
-        <Providers>
-          {children}
-        </Providers>
+      <body className={`${ubuntu.variable}`}>
+        {children}
       </body>
     </html>
   )
